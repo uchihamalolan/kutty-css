@@ -3,13 +3,33 @@ import path from "node:path";
 import { tsPlugin } from "@sveltejs/acorn-typescript";
 import { Parser } from "acorn";
 import MagicString from "magic-string";
-import type { Plugin, ResolvedConfig } from "vite";
 
-import { makeClassName } from "./hash.js";
+import { makeClassName } from "./hash.ts";
 
 const PACKAGE_NAME = "@kutty/css";
 const VIRTUAL_PREFIX = "@kutty/css-virtual:";
 const JS_EXTENSIONS = /\.(tsx?|jsx?)$/;
+
+/** Structural interface for Kutty CSS Vite plugin. */
+export interface KuttyPlugin {
+  name: string;
+  enforce: "pre";
+  configResolved(resolvedConfig: any): void;
+  buildStart(): void;
+  resolveId: {
+    filter: { id: RegExp };
+    handler(id: string): string | null;
+  };
+  load: {
+    filter: { id: RegExp };
+    handler(id: string): string | null;
+  };
+  transform: {
+    filter: { id: RegExp };
+    handler(code: string, id: string): { code: string; map: any } | null;
+  };
+  handleHotUpdate(ctx: { file: string; server: any }): void;
+}
 
 /**
  * Vite plugin for `@kutty/css`.
@@ -29,15 +49,15 @@ const JS_EXTENSIONS = /\.(tsx?|jsx?)$/;
  * });
  * ```
  */
-export default function kuttyCss(): Plugin {
+export default function kuttyCss(): KuttyPlugin {
   const cssByFile = new Map<string, string>();
-  let config: ResolvedConfig;
+  let config: any;
 
   return {
     name: "kutty-css",
     enforce: "pre",
 
-    configResolved(resolvedConfig) {
+    configResolved(resolvedConfig: any) {
       config = resolvedConfig;
     },
 
@@ -47,7 +67,7 @@ export default function kuttyCss(): Plugin {
 
     resolveId: {
       filter: { id: /@kutty\/css-virtual:/ },
-      handler(id) {
+      handler(id: string) {
         if (id.startsWith(VIRTUAL_PREFIX)) {
           return "\0" + id;
         }
@@ -57,7 +77,7 @@ export default function kuttyCss(): Plugin {
 
     load: {
       filter: { id: /@kutty\/css-virtual:/ },
-      handler(id) {
+      handler(id: string) {
         if (!id.startsWith("\0" + VIRTUAL_PREFIX)) return null;
 
         const suffix = ".css";
@@ -75,7 +95,7 @@ export default function kuttyCss(): Plugin {
 
     transform: {
       filter: { id: JS_EXTENSIONS },
-      handler(code, id) {
+      handler(code: string, id: string) {
         if (!code.includes(PACKAGE_NAME)) return null;
 
         let ast: any;
@@ -190,7 +210,7 @@ export default function kuttyCss(): Plugin {
       },
     },
 
-    handleHotUpdate({ file, server }) {
+    handleHotUpdate({ file, server }: { file: string; server: any }) {
       if (!JS_EXTENSIONS.test(file)) return;
 
       const relFileId = path.relative(config.root, file).replace(/\\/g, "/");

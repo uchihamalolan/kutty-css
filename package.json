@@ -1,15 +1,15 @@
 {
   "name": "kutty-css-monorepo",
+  "private": true,
   "homepage": "https://github.com/uchihamalolan/kutty-css#readme",
   "bugs": {
     "url": "https://github.com/uchihamalolan/kutty-css/issues"
   },
+  "author": "uchihamalolan",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/uchihamalolan/kutty-css.git"
   },
-  "author": "uchihamalolan",
-  "private": true,
   "workspaces": [
     "packages/*",
     "examples/*"

@@ -6,13 +6,13 @@
   "bugs": {
     "url": "https://github.com/uchihamalolan/kutty-css/issues"
   },
+  "license": "MIT",
+  "author": "uchihamalolan",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/uchihamalolan/kutty-css.git",
     "directory": "packages/css"
   },
-  "author": "uchihamalolan",
-  "license": "MIT",
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
@@ -22,13 +22,5 @@
     "@sveltejs/acorn-typescript": "^1.0.8",
     "acorn": "^8.14.0",
     "magic-string": "^0.30.17"
-  },
-  "peerDependencies": {
-    "vite": ">=5"
-  },
-  "peerDependenciesMeta": {
-    "vite": {
-      "optional": true
-    }
   }
 }
