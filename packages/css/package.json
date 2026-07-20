@@ -1,6 +1,17 @@
 {
   "name": "@kutty/css",
   "version": "0.0.1",
+  "description": "Zero-runtime colocated CSS for Vite via tagged template literals",
+  "homepage": "https://github.com/uchihamalolan/kutty-css#readme",
+  "bugs": {
+    "url": "https://github.com/uchihamalolan/kutty-css/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/uchihamalolan/kutty-css.git",
+    "directory": "packages/css"
+  },
+  "author": "uchihamalolan",
   "license": "MIT",
   "type": "module",
   "exports": {

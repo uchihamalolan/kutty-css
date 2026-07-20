@@ -1,4 +1,4 @@
-# `@kutty/css` Monorepo
+# [`@kutty/css`](https://github.com/uchihamalolan/kutty-css)
 
 Zero-runtime colocated CSS for Vite via tagged template literals.
 
@@ -28,6 +28,10 @@ Verify JSR package publish readiness:
 cd packages/css
 bunx jsr publish --dry-run
 ```
+
+## Repository
+
+[github.com/uchihamalolan/kutty-css](https://github.com/uchihamalolan/kutty-css)
 
 ## License
 
