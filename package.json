@@ -1,0 +1,11 @@
+{
+  "name": "kutty-css-monorepo",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "examples/*"
+  ],
+  "devDependencies": {
+    "vite-plus": "^0.2.5"
+  }
+}

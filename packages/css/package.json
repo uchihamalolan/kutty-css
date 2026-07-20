@@ -1,0 +1,23 @@
+{
+  "name": "@kutty/css",
+  "version": "0.0.1",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./vite": "./src/vite-plugin.ts"
+  },
+  "dependencies": {
+    "@sveltejs/acorn-typescript": "^1.0.8",
+    "acorn": "^8.14.0",
+    "magic-string": "^0.30.17"
+  },
+  "peerDependencies": {
+    "vite": ">=5"
+  },
+  "peerDependenciesMeta": {
+    "vite": {
+      "optional": true
+    }
+  }
+}

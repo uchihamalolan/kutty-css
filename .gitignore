@@ -1,0 +1,17 @@
+# Logs
+logs
+*.log*
+
+# build
+dist
+node_modules
+*.local
+
+# AI
+.agents
+
+# IDE / OS
+.vscode/*
+!.vscode/settings.json
+.idea
+.DS_Store
