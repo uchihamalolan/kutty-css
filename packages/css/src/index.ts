@@ -1,6 +1,11 @@
 /**
  * @module @kutty/css
- * Zero-runtime colocated CSS via tagged template literals.
+ *
+ * Zero-runtime colocated CSS for Vite via tagged template literals.
+ *
+ * This module exports the `css` tagged template function for writing colocated
+ * CSS styles directly inside component files. At build and dev time, styles are extracted
+ * into standalone `.css` assets by the `@kutty/css` Vite plugin.
  */
 
 /**

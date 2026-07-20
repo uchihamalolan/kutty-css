@@ -1,3 +1,13 @@
+/**
+ * @module @kutty/css/vite
+ *
+ * Vite plugin for `@kutty/css`.
+ *
+ * This module exports `kuttyCss`, a Vite plugin that extracts tagged template CSS
+ * expressions (`css\`...\``) into virtual CSS files and replaces calls with
+ * deterministic generated class names at build and dev time.
+ */
+
 import path from "node:path";
 
 import { tsPlugin } from "@sveltejs/acorn-typescript";
