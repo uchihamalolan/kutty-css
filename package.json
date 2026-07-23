@@ -16,5 +16,12 @@
   ],
   "devDependencies": {
     "vite-plus": "^0.2.5"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "11.16.0",
+      "onFail": "error"
+    }
   }
 }
