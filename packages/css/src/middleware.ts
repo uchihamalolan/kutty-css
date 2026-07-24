@@ -10,14 +10,8 @@ import type { Connect } from "vite";
 
 import { MIDDLEWARE_PREFIX } from "./transform.ts";
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
-/** Minimal subset of `http.IncomingMessage` / `http.ServerResponse` we use. */
-type Req = Connect.IncomingMessage;
-type Res = Connect.ServerResponse;
-type Next = Connect.NextFunction;
+/** Type alias for the connect middleware signature we produce. */
+type Middleware = Connect.NextHandleFunction;
 
 // ---------------------------------------------------------------------------
 // Middleware factory
@@ -37,7 +31,7 @@ type Next = Connect.NextFunction;
 export function createKuttyCssMiddleware(
   prefix: string,
   getCss: (fileId: string) => string | undefined,
-): (req: Req, res: Res, next: Next) => void {
+): Middleware {
   return function kuttyCssMiddleware(req, res, next) {
     if (!req.url?.startsWith(prefix)) return next();
 
