@@ -1,6 +1,6 @@
 {
   "name": "@kutty/css",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Zero-runtime colocated CSS for Vite via tagged template literals",
   "homepage": "https://github.com/uchihamalolan/kutty-css#readme",
   "bugs": {
@@ -16,11 +16,16 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./vite": "./src/vite-plugin.ts"
+    "./vite": "./src/vite-plugin.ts",
+    "./fresh": "./src/fresh-plugin.ts"
+  },
+  "peerDependencies": {
+    "vite": ">=5"
   },
   "dependencies": {
     "@sveltejs/acorn-typescript": "^1.0.8",
     "acorn": "^8.14.0",
-    "magic-string": "^0.30.17"
+    "magic-string": "^0.30.17",
+    "pathe": "^2.0.0"
   }
 }

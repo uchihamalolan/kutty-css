@@ -1,0 +1,22 @@
+{
+  "nodeModulesDir": "manual",
+  "tasks": {
+    "dev": "vite",
+    "build": "vite build",
+    "start": "deno serve -A _fresh/server.js"
+  },
+  "imports": {
+    "fresh": "jsr:@fresh/core@^2",
+    "@fresh/plugin-vite": "jsr:@fresh/plugin-vite@^1",
+    "preact": "npm:preact@^10",
+    "@preact/signals": "npm:@preact/signals@^2",
+    "vite": "npm:vite@^7",
+    "@prefresh/vite": "npm:@prefresh/vite@^2",
+    "@types/babel__core": "npm:@types/babel__core@^7"
+  },
+  "compilerOptions": {
+    "jsx": "precompile",
+    "jsxImportSource": "preact",
+    "types": ["vite/client"]
+  }
+}

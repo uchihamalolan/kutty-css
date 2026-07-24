@@ -1,9 +1,10 @@
 {
   "name": "@kutty/css",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "license": "MIT",
   "exports": {
     ".": "./src/index.ts",
-    "./vite": "./src/vite-plugin.ts"
+    "./vite": "./src/vite-plugin.ts",
+    "./fresh": "./src/fresh-plugin.ts"
   }
 }

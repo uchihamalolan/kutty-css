@@ -1,52 +1,13 @@
 /**
  * @module @kutty/css/vite
  *
- * Vite plugin for `@kutty/css`.
- *
- * This module exports `kuttyCss`, a Vite plugin that extracts tagged template CSS
- * expressions (`css\`...\``) into virtual CSS files and replaces calls with
+ * Standard Vite plugin for `@kutty/css`. Extracts tagged template CSS
+ * expressions (`css\`...\``) into virtual modules and replaces calls with
  * deterministic generated class names at build and dev time.
- */
-
-import path from "node:path";
-
-import { tsPlugin } from "@sveltejs/acorn-typescript";
-import { Parser } from "acorn";
-import MagicString from "magic-string";
-
-import { makeClassName } from "./hash.ts";
-
-const PACKAGE_NAME = "@kutty/css";
-const VIRTUAL_PREFIX = "@kutty/css-virtual:";
-const JS_EXTENSIONS = /\.(tsx?|jsx?)$/;
-
-/** Structural interface for Kutty CSS Vite plugin. */
-export interface KuttyPlugin {
-  name: string;
-  enforce: "pre";
-  configResolved(resolvedConfig: any): void;
-  buildStart(): void;
-  resolveId: {
-    filter: { id: RegExp };
-    handler(id: string): string | null;
-  };
-  load: {
-    filter: { id: RegExp };
-    handler(id: string): string | null;
-  };
-  transform: {
-    filter: { id: RegExp };
-    handler(code: string, id: string): { code: string; map: any } | null;
-  };
-  handleHotUpdate(ctx: { file: string; server: any }): void;
-}
-
-/**
- * Vite plugin for `@kutty/css`.
- * Extracts tagged template CSS expressions into virtual CSS files and replaces `css\`...\``
- * calls with deterministic generated class names at build/dev time.
  *
- * @returns A Vite Plugin object.
+ * CSS is delivered through Vite's native virtual module system, which means it
+ * flows through Vite's CSS pipeline (postcss, transforms, sourcemaps, HMR) and
+ * is emitted as real `.css` assets during production builds.
  *
  * @example
  * ```ts
@@ -59,15 +20,40 @@ export interface KuttyPlugin {
  * });
  * ```
  */
-export default function kuttyCss(): KuttyPlugin {
+
+import type { Plugin, ResolvedConfig } from "vite";
+
+import { VIRTUAL_PREFIX } from "./constants.ts";
+import {
+  buildResolvedCssId,
+  relativizeFileId,
+  runCssTransform,
+  stripVirtualPrefix,
+} from "./transform.ts";
+
+// ---------------------------------------------------------------------------
+// Plugin
+// ---------------------------------------------------------------------------
+
+/**
+ * Vite plugin for `@kutty/css` using Vite's virtual module system.
+ *
+ * - **Dev** — CSS is served as a virtual module through Vite's module pipeline.
+ * - **Build** — CSS is emitted as real `.css` assets in the output.
+ *
+ * Works with any Vite-based framework (React, Preact, Solid, Vue, Svelte, etc.)
+ * but may conflict with the Fresh plugin during dev — use `@kutty/css/fresh`
+ * in Fresh projects instead.
+ */
+export default function kuttyCss(): Plugin {
   const cssByFile = new Map<string, string>();
-  let config: any;
+  let config: ResolvedConfig;
 
   return {
     name: "kutty-css",
     enforce: "pre",
 
-    configResolved(resolvedConfig: any) {
+    configResolved(resolvedConfig) {
       config = resolvedConfig;
     },
 
@@ -75,160 +61,43 @@ export default function kuttyCss(): KuttyPlugin {
       cssByFile.clear();
     },
 
-    resolveId: {
-      filter: { id: /@kutty\/css-virtual:/ },
-      handler(id: string) {
-        if (id.startsWith(VIRTUAL_PREFIX)) {
-          return "\0" + id;
-        }
-        return null;
-      },
+    resolveId(id) {
+      if (id.startsWith(VIRTUAL_PREFIX)) {
+        return "\0" + id;
+      }
+      return null;
     },
 
-    load: {
-      filter: { id: /@kutty\/css-virtual:/ },
-      handler(id: string) {
-        if (!id.startsWith("\0" + VIRTUAL_PREFIX)) return null;
+    load(id) {
+      if (!id.startsWith("\0" + VIRTUAL_PREFIX)) return null;
 
-        const suffix = ".css";
-        const rawId = id.slice(1 + VIRTUAL_PREFIX.length);
-        const relFileId = rawId.endsWith(suffix) ? rawId.slice(0, -suffix.length) : rawId;
+      const fileId = stripVirtualPrefix(id)
+        .slice(VIRTUAL_PREFIX.length)
+        .replace(/\.css$/, "");
 
-        const css = cssByFile.get(relFileId);
-        if (css === undefined) {
-          throw new Error(`[kutty/css] CSS not found for virtual file: ${id}`);
-        }
-
-        return css;
-      },
+      const css = cssByFile.get(fileId);
+      if (css === undefined) {
+        throw new Error(`[kutty/css] CSS not found for virtual file: ${id}`);
+      }
+      return css;
     },
 
-    transform: {
-      filter: { id: JS_EXTENSIONS },
-      handler(code: string, id: string) {
-        if (!code.includes(PACKAGE_NAME)) return null;
-
-        let ast: any;
-        try {
-          const ext = path.extname(id);
-          const isJsx = ext === ".tsx" || ext === ".jsx";
-          const isDts = id.endsWith(".d.ts");
-
-          const extendedParser = Parser.extend(
-            tsPlugin({
-              dts: isDts,
-              jsx: isJsx,
-            }),
-          );
-
-          ast = extendedParser.parse(code, {
-            ecmaVersion: "latest",
-            sourceType: "module",
-            locations: true,
-          });
-        } catch {
-          return null;
-        }
-
-        let localCssName: string | null = null;
-        const matches: Array<{
-          start: number;
-          end: number;
-          raw: string;
-          varName: string;
-        }> = [];
-
-        function walk(node: any, parent: any) {
-          if (!node || typeof node !== "object") return;
-
-          if (node.type === "ImportDeclaration" && node.source.value === PACKAGE_NAME) {
-            for (const spec of node.specifiers) {
-              if (
-                spec.type === "ImportSpecifier" &&
-                spec.imported.type === "Identifier" &&
-                spec.imported.name === "css"
-              ) {
-                localCssName = spec.local.name;
-              }
-            }
-            return;
-          }
-
-          if (node.type === "TaggedTemplateExpression" && localCssName) {
-            const tag = node.tag;
-            if (tag.type === "Identifier" && tag.name === localCssName) {
-              if (node.quasi.expressions.length > 0) {
-                throw new Error(
-                  `[kutty/css] Dynamic interpolation is not supported inside css\`\`.\n` +
-                    `Only static CSS text is allowed in v1.\n` +
-                    `File: ${id}`,
-                );
-              }
-
-              let varName = "anon";
-              let curr = parent;
-              if (curr && curr.type === "VariableDeclarator" && curr.id.type === "Identifier") {
-                varName = curr.id.name;
-              }
-
-              const raw = node.quasi.quasis.map((q: any) => q.value.raw).join("");
-              matches.push({
-                start: node.start,
-                end: node.end,
-                raw,
-                varName,
-              });
-            }
-          }
-
-          for (const key of Object.keys(node)) {
-            const val = node[key];
-            if (Array.isArray(val)) {
-              for (const child of val) {
-                walk(child, node);
-              }
-            } else if (val && typeof val === "object") {
-              walk(val, node);
-            }
-          }
-        }
-
-        walk(ast, null);
-
-        if (!localCssName || matches.length === 0) return null;
-
-        const isDev = config.command === "serve";
-        const relFileId = path.relative(config.root, id).replace(/\\/g, "/");
-
-        const s = new MagicString(code);
-        let cssBuffer = "";
-
-        for (const m of matches) {
-          const className = makeClassName(relFileId, m.varName, isDev);
-          cssBuffer += `.${className} {\n${m.raw}\n}\n`;
-          s.overwrite(m.start, m.end, JSON.stringify(className));
-        }
-
-        cssByFile.set(relFileId, cssBuffer);
-
-        const virtualImport = `import "${VIRTUAL_PREFIX}${relFileId}.css";\n`;
-
-        return {
-          code: virtualImport + s.toString(),
-          map: s.generateMap({ hires: true, source: id }),
-        };
-      },
+    transform(code, id) {
+      return runCssTransform(code, id, config.root, "virtual", cssByFile);
     },
 
-    handleHotUpdate({ file, server }: { file: string; server: any }) {
-      if (!JS_EXTENSIONS.test(file)) return;
+    handleHotUpdate(ctx) {
+      if (!/\.(tsx?|jsx?)$/.test(ctx.file)) return;
 
-      const relFileId = path.relative(config.root, file).replace(/\\/g, "/");
-      const virtualId = "\0" + VIRTUAL_PREFIX + relFileId + ".css";
-      const mod = server.moduleGraph.getModuleById(virtualId);
+      const relFileId = relativizeFileId(ctx.file, config.root);
+      const cssId = buildResolvedCssId(relFileId, "virtual");
+      const mod = ctx.server.moduleGraph.getModuleById(cssId);
 
       if (mod) {
-        server.moduleGraph.invalidateModule(mod);
+        ctx.server.moduleGraph.invalidateModule(mod);
+        // Include the CSS module alongside whatever Vite would normally update,
+        // so the browser re-fetches the stylesheet without a full page reload.
+        return [...ctx.modules, mod];
       }
     },
   };
