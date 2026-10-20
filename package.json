@@ -15,7 +15,7 @@
     "examples/*"
   ],
   "devDependencies": {
-    "vite-plus": "^0.2.5"
+    "vite-plus": "^1.1.0"
   },
   "devEngines": {
     "packageManager": {
